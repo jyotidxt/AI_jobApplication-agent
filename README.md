@@ -1,36 +1,459 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 AI Job Application Agent SaaS
 
-## Getting Started
+An AI-powered job application platform that helps job seekers automate and organize their job search. Upload your resume, discover matching opportunities, track applications, save jobs, and let an AI-powered browser agent apply to jobs faster.
 
-First, run the development server:
+Built with **Next.js**, **React**, **Supabase**, **Browserbase**, **Antigravity AI**, **CodeRabbit**, and modern AI workflows.
+
+---
+
+# ✨ Features
+
+## 🤖 AI Resume Analysis
+- Upload PDF or DOCX resumes
+- AI extracts skills, experience, education, and keywords
+- Resume scoring and optimization suggestions
+- Generate structured candidate profile
+
+## 🔍 AI Job Matching
+- Match jobs based on resume
+- Semantic search using embeddings
+- AI ranking of job relevance
+- Skill gap analysis
+- Personalized recommendations
+
+## 💼 Job Discovery
+- Search thousands of job listings
+- Filter by
+  - Location
+  - Remote
+  - Salary
+  - Experience
+  - Company
+  - Job Type
+- Save favorite jobs
+
+## 🤖 AI Job Application Agent
+- Automatically open job pages
+- Fill application forms
+- Upload resume
+- Answer common application questions
+- Track application status
+- Human approval before submission (optional)
+
+Powered by **Browserbase** browser automation.
+
+## 📊 Application Tracker
+Track every application.
+
+Statuses include:
+
+- Saved
+- Applied
+- Interview
+- Assessment
+- Offer
+- Rejected
+
+Timeline view included.
+
+## 📄 Resume Manager
+- Multiple resumes
+- Resume versioning
+- Resume previews
+- Download optimized versions
+
+## 📝 Cover Letter Generator
+Generate personalized cover letters using AI.
+
+Customize by:
+- Company
+- Role
+- Skills
+- Tone
+
+## 📈 Dashboard
+Overview includes:
+
+- Applications sent
+- Saved jobs
+- Interviews
+- Response rate
+- Weekly activity
+- AI recommendations
+
+## 🔐 Authentication
+- Email Login
+- Google OAuth
+- Secure sessions via Supabase Auth
+
+---
+
+# 🛠 Tech Stack
+
+| Technology | Purpose |
+|------------|---------|
+| Next.js 15 | Frontend + Backend |
+| React 19 | UI |
+| TypeScript | Type Safety |
+| Tailwind CSS | Styling |
+| Shadcn UI | Components |
+| Supabase | Database + Auth + Storage |
+| Browserbase | Browser Automation |
+| Antigravity AI | AI Agents |
+| OpenAI | Resume & Job Intelligence |
+| CodeRabbit | AI Code Reviews |
+| Vercel | Deployment |
+
+---
+
+# 🏗 Architecture
+
+```
+                User
+
+                 │
+
+         Next.js Frontend
+
+                 │
+
+        API Routes / Server Actions
+
+        ┌──────────┬───────────┐
+        │          │           │
+        ▼          ▼           ▼
+
+   Supabase    OpenAI    Browserbase
+ Database        AI        Browser
+
+                 │
+                 ▼
+
+          Antigravity Agent
+```
+
+---
+
+# 📂 Project Structure
+
+```
+ai-job-agent/
+
+│
+
+├── app/
+│   ├── dashboard/
+│   ├── jobs/
+│   ├── applications/
+│   ├── profile/
+│   ├── api/
+│   └── auth/
+│
+├── components/
+│
+├── lib/
+│   ├── supabase.ts
+│   ├── browserbase.ts
+│   ├── antigravity.ts
+│   └── ai.ts
+│
+├── hooks/
+│
+├── services/
+│
+├── types/
+│
+├── utils/
+│
+├── public/
+│
+└── prisma/
+```
+
+---
+
+# ⚙️ Installation
+
+Clone the repository.
+
+```bash
+git clone https://github.com/jyotidxt/AI_jobApplication-agent.git
+
+cd ai-job-agent
+```
+
+Install dependencies.
+
+```bash
+npm install
+```
+
+Create environment variables.
+
+```bash
+cp .env.example .env.local
+```
+
+Run development server.
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# 🔑 Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+NEXT_PUBLIC_SUPABASE_URL=
 
-## Learn More
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
-To learn more about Next.js, take a look at the following resources:
+SUPABASE_SERVICE_ROLE_KEY=
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+OPENAI_API_KEY=
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+BROWSERBASE_API_KEY=
 
-## Deploy on Vercel
+BROWSERBASE_PROJECT_ID=
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+ANTIGRAVITY_API_KEY=
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+NEXTAUTH_SECRET=
+
+NEXTAUTH_URL=
+```
+
+---
+
+# 🗄 Database Schema
+
+## Users
+
+```sql
+id
+email
+name
+created_at
+```
+
+## Resumes
+
+```sql
+id
+user_id
+file_url
+parsed_data
+created_at
+```
+
+## Jobs
+
+```sql
+id
+title
+company
+location
+salary
+url
+description
+```
+
+## Saved Jobs
+
+```sql
+id
+user_id
+job_id
+```
+
+## Applications
+
+```sql
+id
+user_id
+job_id
+status
+notes
+applied_at
+```
+
+---
+
+# 🤖 AI Workflow
+
+### Step 1
+
+User uploads resume.
+
+↓
+
+### Step 2
+
+AI extracts:
+
+- Skills
+- Experience
+- Education
+- Certifications
+
+↓
+
+### Step 3
+
+Job search begins.
+
+↓
+
+### Step 4
+
+AI ranks jobs by match score.
+
+↓
+
+### Step 5
+
+User saves or applies.
+
+↓
+
+### Step 6
+
+Browserbase agent opens application.
+
+↓
+
+### Step 7
+
+AI fills forms.
+
+↓
+
+### Step 8
+
+Resume uploaded.
+
+↓
+
+### Step 9
+
+Application submitted.
+
+↓
+
+### Step 10
+
+Status tracked automatically.
+
+---
+
+# 📸 Screenshots
+
+## Dashboard
+
+- Resume score
+- Job matches
+- Applications
+- Analytics
+
+---
+
+## Job Search
+
+- AI Match %
+- Save Job
+- Apply Now
+
+---
+
+## Application Tracker
+
+- Kanban View
+- Timeline
+- Notes
+- Interview Tracker
+
+---
+
+## AI Resume Analyzer
+
+- Skill Extraction
+- ATS Score
+- Suggestions
+
+---
+
+# 🚀 Deployment
+
+Deploy easily on **Vercel**.
+
+```bash
+npm run build
+```
+
+```bash
+vercel
+```
+
+---
+
+# 🔒 Security
+
+- Row Level Security (Supabase)
+- JWT Authentication
+- Secure API Routes
+- Rate Limiting
+- File Validation
+- Encrypted Secrets
+
+---
+
+# 🧪 Future Improvements
+
+- LinkedIn integration
+- Indeed integration
+- Glassdoor integration
+- AI interview preparation
+- Salary prediction
+- Recruiter CRM
+- Email automation
+- Calendar scheduling
+- Chrome Extension
+- Mobile application
+- Multi-language support
+- Team accounts
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome!
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Open a Pull Request
+
+---
+
+# 📄 License
+
+Licensed under the MIT License.
+
+---
+
+# 🙌 Acknowledgements
+
+- Next.js
+- React
+- Supabase
+- Browserbase
+- Antigravity AI
+- OpenAI
+- CodeRabbit
+- Tailwind CSS
+- Shadcn UI
+
+---
+
+## ⭐ If you found this project helpful, consider giving it a star on GitHub!
