@@ -47,10 +47,10 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-purple-500 to-indigo-500 p-0.5 shadow-md shadow-purple-500/10">
               <div className="flex h-full w-full items-center justify-center rounded-md bg-zinc-950 text-white font-bold text-sm">
-                A
+                AI
               </div>
             </div>
-            <span className="font-semibold text-lg tracking-tight text-white">Antigravity Console</span>
+            <span className="font-semibold text-lg tracking-tight text-white">AI Job Agent Console</span>
           </div>
           <form action={signOut}>
             <Button

@@ -25,17 +25,17 @@ export default async function Home() {
         {/* Logo Icon */}
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-500 p-0.5 shadow-xl shadow-purple-500/10">
           <div className="flex h-full w-full items-center justify-center rounded-xl bg-zinc-950 text-white font-extrabold text-2xl">
-            A
+            AI
           </div>
         </div>
 
         {/* Hero Section */}
         <div className="space-y-4">
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white">
-            Antigravity <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">Security</span>
+            AI Job <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">Application Agent</span>
           </h1>
           <p className="text-zinc-400 text-lg sm:text-xl max-w-lg mx-auto font-medium leading-relaxed">
-            A secure gateway powered by Supabase Authentication. Experience premium, state-of-the-art route protection.
+            Your automated career assistant. Manage, track, and optimize your job applications powered by intelligent AI models.
           </p>
         </div>
 

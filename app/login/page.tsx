@@ -54,14 +54,14 @@ export default function LoginPage() {
         <CardHeader className="space-y-2 text-center">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-purple-500 to-indigo-500 p-0.5 shadow-lg shadow-purple-500/20">
             <div className="flex h-full w-full items-center justify-center rounded-full bg-zinc-950 text-white font-bold text-lg">
-              A
+              AI
             </div>
           </div>
           <CardTitle className="text-3xl font-extrabold tracking-tight text-white mt-2">
             Welcome back
           </CardTitle>
           <CardDescription className="text-zinc-400">
-            Enter your details to sign in to your dashboard
+            Sign in to manage your AI job applications
           </CardDescription>
         </CardHeader>
         
