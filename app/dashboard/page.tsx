@@ -1,7 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { signOut } from '@/app/actions/auth'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default async function DashboardPage() {
@@ -15,166 +13,103 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  const createdDate = user.created_at
-    ? new Date(user.created_at).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : 'N/A'
-
-  const lastSignIn = user.last_sign_in_at
-    ? new Date(user.last_sign_in_at).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : 'N/A'
+  const mockStats = [
+    {
+      title: 'Active Applications',
+      value: '0',
+      description: 'Jobs currently tracked',
+      icon: (
+        <svg className="h-5 w-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Resumes Tailored',
+      value: '0',
+      description: 'Versions built with AI',
+      icon: (
+        <svg className="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+    },
+    {
+      title: 'Success Rate',
+      value: '0%',
+      description: 'Interview callback rate',
+      icon: (
+        <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      ),
+    },
+  ]
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 flex flex-col overflow-hidden font-sans">
-      {/* Background glow orbs */}
-      <div className="absolute top-[-20%] right-[-10%] h-[500px] w-[500px] rounded-full bg-purple-900/10 blur-[130px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-indigo-900/10 blur-[130px] pointer-events-none" />
+    <div className="space-y-6">
+      {/* Welcome Banner */}
+      <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden shadow-2xl">
+        <div className="absolute top-[-50%] right-[-10%] h-[300px] w-[300px] rounded-full bg-purple-900/10 blur-[90px] pointer-events-none" />
+        <div className="space-y-2 relative z-10">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-white">
+            Welcome to AIJobBuddy
+          </h2>
+          <p className="text-zinc-400 text-sm md:text-base max-w-xl">
+            Here's an overview of your job application activities. Select any tab in the sidebar to get started.
+          </p>
+        </div>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-semibold relative z-10">
+          <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-ping" />
+          Active Agent Session
+        </div>
+      </div>
 
-      {/* Navbar */}
-      <header className="relative z-10 border-b border-zinc-800 bg-zinc-900/30 backdrop-blur-md">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-purple-500 to-indigo-500 p-0.5 shadow-md shadow-purple-500/10">
-              <div className="flex h-full w-full items-center justify-center rounded-md bg-zinc-950 text-white font-bold text-sm">
-                AI
-              </div>
+      {/* Stats Summary Grid */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {mockStats.map((stat) => (
+          <Card key={stat.title} className="border-zinc-900 bg-zinc-950/40 text-zinc-100 shadow-xl backdrop-blur-xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-semibold text-zinc-400">{stat.title}</CardTitle>
+              <div className="p-2 bg-zinc-900/80 rounded-lg">{stat.icon}</div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-extrabold text-white tracking-tight">{stat.value}</div>
+              <p className="text-xs text-zinc-500 mt-1 font-medium">{stat.description}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Overview/Guide Card */}
+      <Card className="border-zinc-900 bg-zinc-950/20 text-zinc-100 shadow-xl backdrop-blur-xl">
+        <CardHeader>
+          <CardTitle className="text-lg font-bold text-white">Getting Started with your AI Job Assistant</CardTitle>
+          <CardDescription className="text-zinc-500">How to maximize your application success with AI</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="p-4 rounded-xl bg-zinc-900/30 border border-zinc-900 space-y-2">
+              <h4 className="font-semibold text-sm text-purple-400 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-500/10 text-xs text-purple-400 font-bold">1</span>
+                Track Jobs
+              </h4>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Add job opportunities in the <strong>Jobs</strong> page to track application deadlines, interview dates, and custom notes.
+              </p>
             </div>
-            <span className="font-semibold text-lg tracking-tight text-white">AI Job Agent Console</span>
+            <div className="p-4 rounded-xl bg-zinc-900/30 border border-zinc-900 space-y-2">
+              <h4 className="font-semibold text-sm text-indigo-400 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500/10 text-xs text-indigo-400 font-bold">2</span>
+                Tailor Resumes
+              </h4>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Upload your master resume in the <strong>Resume</strong> builder. The AI agent will auto-optimize your experience for targeted roles.
+              </p>
+            </div>
           </div>
-          <form action={signOut}>
-            <Button
-              type="submit"
-              variant="outline"
-              className="border-zinc-800 bg-zinc-900/40 text-zinc-300 hover:text-white hover:bg-zinc-800/80 transition-colors"
-            >
-              Sign Out
-            </Button>
-          </form>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="relative z-10 flex-grow mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        {/* Welcome Banner */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/20 backdrop-blur-xl p-8 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">
-              Welcome back,
-            </h1>
-            <p className="text-purple-400 font-medium text-lg md:text-xl truncate max-w-md lg:max-w-xl">
-              {user.email}
-            </p>
-          </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm font-semibold">
-            <span className="h-2 w-2 rounded-full bg-purple-400 animate-ping" />
-            Session Active
-          </div>
-        </div>
-
-        {/* Dashboard Cards Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Card 1: Identity */}
-          <Card className="border-zinc-800/80 bg-zinc-900/30 backdrop-blur-xl text-zinc-100 shadow-xl">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <CardTitle className="text-lg font-bold text-white">Profile Details</CardTitle>
-                  <CardDescription className="text-zinc-500 text-xs">Your registered account details</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-2">
-              <div className="space-y-1">
-                <span className="text-zinc-500 text-xs font-semibold uppercase tracking-wider">User ID</span>
-                <p className="text-sm font-mono text-zinc-300 bg-zinc-950/50 p-2 rounded border border-zinc-800/40 break-all select-all">
-                  {user.id}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <span className="text-zinc-500 text-xs font-semibold uppercase tracking-wider">Email</span>
-                <p className="text-sm text-zinc-300 truncate">{user.email}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card 2: Auth Provider */}
-          <Card className="border-zinc-800/80 bg-zinc-900/30 backdrop-blur-xl text-zinc-100 shadow-xl">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
-                <div>
-                  <CardTitle className="text-lg font-bold text-white">Auth Provider</CardTitle>
-                  <CardDescription className="text-zinc-500 text-xs">Security credentials & provider</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-2">
-              <div className="space-y-1">
-                <span className="text-zinc-500 text-xs font-semibold uppercase tracking-wider">Method</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-800 text-zinc-300 capitalize border border-zinc-700">
-                    {user.app_metadata?.provider || 'Email / Password'}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <span className="text-zinc-500 text-xs font-semibold uppercase tracking-wider">Security status</span>
-                <p className="text-sm text-zinc-300 flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  Verified Session
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card 3: Timeline */}
-          <Card className="border-zinc-800/80 bg-zinc-900/30 backdrop-blur-xl text-zinc-100 shadow-xl md:col-span-2 lg:col-span-1">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <CardTitle className="text-lg font-bold text-white">Timeline</CardTitle>
-                  <CardDescription className="text-zinc-500 text-xs">Account history and status</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-2">
-              <div className="space-y-1">
-                <span className="text-zinc-500 text-xs font-semibold uppercase tracking-wider">Created At</span>
-                <p className="text-sm text-zinc-300">{createdDate}</p>
-              </div>
-              <div className="space-y-1">
-                <span className="text-zinc-500 text-xs font-semibold uppercase tracking-wider">Last Sign In</span>
-                <p className="text-sm text-zinc-300">{lastSignIn}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+        </CardContent>
+      </Card>
     </div>
   )
 }
