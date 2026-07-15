@@ -32,7 +32,7 @@ export default async function DashboardLayout({
             <span>Secure Session</span>
           </div>
         </header>
-        <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-zinc-950">
+        <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-zinc-950 relative">
           {children}
         </div>
       </SidebarInset>
