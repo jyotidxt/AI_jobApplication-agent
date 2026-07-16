@@ -274,7 +274,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     <button
                       type="button"
                       onClick={() => handleRemoveSkill(skill)}
-                      className="text-purple-400 hover:text-purple-200 transition-colors"
+                      className="text-purple-400 hover:text-purple-200 transition-colors cursor-pointer"
                     >
                       &times;
                     </button>
@@ -305,7 +305,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     <button
                       type="button"
                       onClick={() => handleRemoveCert(cert)}
-                      className="text-indigo-400 hover:text-indigo-200 transition-colors"
+                      className="text-indigo-400 hover:text-indigo-200 transition-colors cursor-pointer"
                     >
                       &times;
                     </button>
@@ -327,7 +327,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
           <button
             type="button"
             onClick={handleAddExperience}
-            className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs font-bold text-purple-400 rounded-lg transition-colors flex items-center gap-1 shadow-md shadow-zinc-950/50"
+            className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs font-bold text-purple-400 rounded-lg transition-colors flex items-center gap-1 shadow-md shadow-zinc-950/50 cursor-pointer"
           >
             + Add Experience
           </button>
@@ -344,7 +344,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 <button
                   type="button"
                   onClick={() => handleRemoveExperience(expIdx)}
-                  className="absolute top-0 right-0 p-1.5 text-zinc-500 hover:text-rose-400 transition-colors border border-transparent hover:border-zinc-800 hover:bg-zinc-950 rounded-lg mt-2 mr-2"
+                  className="absolute top-0 right-0 p-1.5 text-zinc-500 hover:text-rose-400 transition-colors border border-transparent hover:border-zinc-800 hover:bg-zinc-950 rounded-lg mt-2 mr-2 cursor-pointer"
                   title="Remove this experience"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -393,7 +393,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     <button
                       type="button"
                       onClick={() => handleAddResponsibility(expIdx)}
-                      className="text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-0.5"
+                      className="text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-0.5 cursor-pointer"
                     >
                       + Add Bullet
                     </button>
@@ -416,7 +416,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                           <button
                             type="button"
                             onClick={() => handleRemoveResponsibility(expIdx, respIdx)}
-                            className="text-zinc-600 hover:text-rose-400 transition-colors text-sm p-1"
+                            className="text-zinc-600 hover:text-rose-400 transition-colors text-sm p-1 cursor-pointer"
                           >
                             &times;
                           </button>
@@ -441,7 +441,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
           <button
             type="button"
             onClick={handleAddEducation}
-            className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs font-bold text-indigo-400 rounded-lg transition-colors flex items-center gap-1 shadow-md shadow-zinc-950/50"
+            className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs font-bold text-indigo-400 rounded-lg transition-colors flex items-center gap-1 shadow-md shadow-zinc-950/50 cursor-pointer"
           >
             + Add Education
           </button>
@@ -458,7 +458,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 <button
                   type="button"
                   onClick={() => handleRemoveEducation(eduIdx)}
-                  className="absolute top-0 right-0 p-1.5 text-zinc-500 hover:text-rose-400 transition-colors border border-transparent hover:border-zinc-800 hover:bg-zinc-950 rounded-lg mt-2 mr-2"
+                  className="absolute top-0 right-0 p-1.5 text-zinc-500 hover:text-rose-400 transition-colors border border-transparent hover:border-zinc-800 hover:bg-zinc-950 rounded-lg mt-2 mr-2 cursor-pointer"
                   title="Remove this education entry"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -526,7 +526,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
           <button
             type="button"
             onClick={handleAddProject}
-            className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs font-bold text-purple-400 rounded-lg transition-colors flex items-center gap-1 shadow-md shadow-zinc-950/50"
+            className="px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs font-bold text-purple-400 rounded-lg transition-colors flex items-center gap-1 shadow-md shadow-zinc-950/50 cursor-pointer"
           >
             + Add Project
           </button>
@@ -543,7 +543,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 <button
                   type="button"
                   onClick={() => handleRemoveProject(projIdx)}
-                  className="absolute top-0 right-0 p-1.5 text-zinc-500 hover:text-rose-400 transition-colors border border-transparent hover:border-zinc-800 hover:bg-zinc-950 rounded-lg mt-2 mr-2"
+                  className="absolute top-0 right-0 p-1.5 text-zinc-500 hover:text-rose-400 transition-colors border border-transparent hover:border-zinc-800 hover:bg-zinc-950 rounded-lg mt-2 mr-2 cursor-pointer"
                   title="Remove this project"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -613,7 +613,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
         <button
           type="submit"
           disabled={isSaving}
-          className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-purple-900/30 flex items-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-purple-900/30 flex items-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {isSaving ? (
             <>
