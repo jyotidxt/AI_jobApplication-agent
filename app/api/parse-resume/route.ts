@@ -19,9 +19,10 @@ export async function POST(req: NextRequest) {
     try {
       // Dynamically import pdf-parse and cast as any to bypass TypeScript compilation error
       const pdfParseModule = (await import('pdf-parse')) as any
-      const pdf = pdfParseModule.default || pdfParseModule
-      const data = await pdf(buffer)
-      parsedText = data.text
+      const parser = new pdfParseModule.PDFParse({ data: buffer })
+      const result = await parser.getText()
+      parsedText = result.text
+      await parser.destroy()
     } catch (err: any) {
       console.error('Error parsing PDF:', err)
       return NextResponse.json({ error: 'Failed to extract text from PDF: ' + err.message }, { status: 500 })
