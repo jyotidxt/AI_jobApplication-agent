@@ -116,3 +116,58 @@ CREATE POLICY "Allow users to delete their own resumes"
 ON storage.objects FOR DELETE
 TO authenticated
 USING ( bucket_id = 'resumes' AND (SELECT auth.uid())::text = (storage.foldername(name))[1] );
+
+-- Create jobs table
+CREATE TABLE IF NOT EXISTS public.jobs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    platform TEXT NOT NULL, -- 'greenhouse', 'lever', 'workable', 'wellfound'
+    title TEXT NOT NULL,
+    company TEXT NOT NULL,
+    company_logo TEXT,
+    location TEXT,
+    salary TEXT,
+    job_type TEXT,
+    experience_level TEXT,
+    description TEXT,
+    tags JSONB,
+    match_score INTEGER DEFAULT 0 NOT NULL,
+    job_url TEXT NOT NULL,
+    source_url TEXT,
+    applied_status BOOLEAN DEFAULT false NOT NULL,
+    saved_status BOOLEAN DEFAULT false NOT NULL,
+    fetched_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Enable RLS on jobs
+ALTER TABLE public.jobs ENABLE ROW LEVEL SECURITY;
+
+-- Policies for jobs
+DROP POLICY IF EXISTS "Users can select their own jobs" ON public.jobs;
+CREATE POLICY "Users can select their own jobs"
+ON public.jobs FOR SELECT
+TO authenticated
+USING ( (SELECT auth.uid()) = user_id );
+
+DROP POLICY IF EXISTS "Users can insert their own jobs" ON public.jobs;
+CREATE POLICY "Users can insert their own jobs"
+ON public.jobs FOR INSERT
+TO authenticated
+WITH CHECK ( (SELECT auth.uid()) = user_id );
+
+DROP POLICY IF EXISTS "Users can update their own jobs" ON public.jobs;
+CREATE POLICY "Users can update their own jobs"
+ON public.jobs FOR UPDATE
+TO authenticated
+USING ( (SELECT auth.uid()) = user_id )
+WITH CHECK ( (SELECT auth.uid()) = user_id );
+
+DROP POLICY IF EXISTS "Users can delete their own jobs" ON public.jobs;
+CREATE POLICY "Users can delete their own jobs"
+ON public.jobs FOR DELETE
+TO authenticated
+USING ( (SELECT auth.uid()) = user_id );
+
+-- Create index on user_id for faster lookups
+CREATE INDEX IF NOT EXISTS jobs_user_id_idx ON public.jobs(user_id);
