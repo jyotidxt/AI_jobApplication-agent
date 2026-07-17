@@ -21,7 +21,9 @@ export interface Project {
 export interface Profile {
   id: string;
   full_name: string | null;
+  email: string | null;
   phone: string | null;
+  address: string | null;
   website: string | null;
   github: string | null;
   linkedin: string | null;
