@@ -118,7 +118,9 @@ export function OnboardingModal({ initialIsOnboarded }: OnboardingModalProps) {
       // Save Profile Data
       const profileResult = await saveProfile({
         full_name: parsedData.full_name || user.email?.split('@')[0] || 'New User',
+        email: parsedData.email || user.email || '',
         phone: parsedData.phone || '',
+        address: parsedData.address || '',
         website: parsedData.website || '',
         github: parsedData.github || '',
         linkedin: parsedData.linkedin || '',

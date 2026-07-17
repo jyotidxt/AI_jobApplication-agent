@@ -77,7 +77,9 @@ Do not include any explanation, markdown formatting (no \`\`\`json code blocks),
 JSON Schema:
 {
   "full_name": "string or null",
+  "email": "string or null",
   "phone": "string or null",
+  "address": "string or null",
   "website": "string or null",
   "github": "string or null",
   "linkedin": "string or null",
@@ -172,7 +174,9 @@ Do not include any explanation, markdown formatting (no \`\`\`json code blocks),
 JSON Schema:
 {
   "full_name": "string or null",
+  "email": "string or null",
   "phone": "string or null",
+  "address": "string or null",
   "website": "string or null",
   "github": "string or null",
   "linkedin": "string or null",
@@ -245,7 +249,9 @@ function generateMockProfile(text: string): Partial<Profile> {
 
   return {
     full_name: candidateName,
+    email: emailMatch ? emailMatch[0] : 'candidate@example.com',
     phone: phoneMatch ? phoneMatch[0] : '+1-555-0199',
+    address: 'San Francisco, CA',
     website: 'https://portfolio.example.com',
     github: 'https://github.com/example',
     linkedin: 'https://linkedin.com/in/example',

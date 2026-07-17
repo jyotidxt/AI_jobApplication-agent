@@ -5,7 +5,9 @@
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     full_name TEXT,
+    email TEXT,
     phone TEXT,
+    address TEXT,
     website TEXT,
     github TEXT,
     linkedin TEXT,
