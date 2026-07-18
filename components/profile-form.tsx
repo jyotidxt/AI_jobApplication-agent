@@ -1,19 +1,60 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Profile, WorkExperience, Education, Project } from '@/lib/types'
 import { saveProfile } from '@/app/actions/profile'
 import { toast } from 'sonner'
+import { AlertCircle } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
 
 interface ProfileFormProps {
   initialProfile: Profile | null
+  missingFields?: string[]
+  missingJobInfo?: { company: string; title: string } | null
 }
 
 type TabType = 'personal' | 'experience' | 'education' | 'projects' | 'skills'
 
-export function ProfileForm({ initialProfile }: ProfileFormProps) {
+export function ProfileForm({ initialProfile, missingFields = [], missingJobInfo = null }: ProfileFormProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('personal')
+
+  // Helper functions for highlighting missing fields
+  const getTabForField = (field: string): TabType => {
+    switch (field) {
+      case 'full_name':
+      case 'email':
+      case 'phone':
+      case 'address':
+      case 'website':
+      case 'github':
+      case 'linkedin':
+      case 'summary':
+        return 'personal'
+      case 'experience':
+        return 'experience'
+      case 'education':
+        return 'education'
+      case 'projects':
+        return 'projects'
+      case 'skills':
+        return 'skills'
+      default:
+        return 'personal'
+    }
+  }
+
+  const isFieldMissing = (field: string) => missingFields.includes(field)
+  const isTabMissing = (tab: TabType) => missingFields.some(f => getTabForField(f) === tab)
+
+  // Auto-switch to the tab that has the first missing field
+  useEffect(() => {
+    if (missingFields.length > 0) {
+      const tab = getTabForField(missingFields[0])
+      setActiveTab(tab)
+    }
+  }, [missingFields])
 
   // Personal Info State
   const [fullName, setFullName] = useState(initialProfile?.full_name || '')
@@ -226,6 +267,31 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
   return (
     <div className="space-y-6 pb-12">
 
+      {/* Warning alert banner for missing application fields */}
+      {missingFields.length > 0 && missingJobInfo && (
+        <div className="p-4 rounded-2xl border border-rose-500/25 bg-rose-500/5 text-xs text-rose-300 font-semibold flex gap-3 shadow-xl backdrop-blur-xl animate-in slide-in-from-top-4 duration-300">
+          <AlertCircle className="h-5 w-5 text-rose-400 flex-shrink-0 mt-0.5" />
+          <div className="space-y-1.5 flex-1">
+            <h4 className="font-extrabold text-white text-sm">Action Required: Missing Application Profile Details</h4>
+            <p className="text-zinc-400 leading-normal font-medium">
+              Our AI agent scanned the form for <strong>{missingJobInfo.title}</strong> at <strong>{missingJobInfo.company}</strong> and requires the following missing fields to automatically apply. Please complete them and hit save below:
+            </p>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {missingFields.map((f, i) => (
+                <Badge key={i} variant="outline" className="bg-rose-950/40 border-rose-900 text-rose-300 uppercase text-[9px] font-bold px-2.5 py-0.5">
+                  {f.replace('_', ' ')}
+                </Badge>
+              ))}
+              {missingFields.includes('resume') && (
+                <Link href="/dashboard/resume" className="text-purple-400 hover:text-purple-300 underline font-bold uppercase text-[9px] px-2 py-0.5 ml-1">
+                  Upload Resume Manager ↗
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* HORIZONTAL TAB MENU BAR (Professional top-tab UI) */}
       <div className="border-b border-zinc-900 pb-px">
         <div className="flex overflow-x-auto whitespace-nowrap scrollbar-none gap-2 md:gap-6">
@@ -243,6 +309,9 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             <span>Personal Info</span>
+            {isTabMissing('personal') && (
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 absolute top-2 right-1 animate-pulse" />
+            )}
           </button>
 
           {/* 2. Experience Tab */}
@@ -259,6 +328,9 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
             <span>Experience</span>
+            {isTabMissing('experience') && (
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 absolute top-2 right-1 animate-pulse" />
+            )}
           </button>
 
           {/* 3. Education Tab */}
@@ -277,6 +349,9 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 14v7" />
             </svg>
             <span>Education</span>
+            {isTabMissing('education') && (
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 absolute top-2 right-1 animate-pulse" />
+            )}
           </button>
 
           {/* 4. Projects Tab */}
@@ -293,6 +368,9 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
             </svg>
             <span>Projects</span>
+            {isTabMissing('projects') && (
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 absolute top-2 right-1 animate-pulse" />
+            )}
           </button>
 
           {/* 5. Skills & Certs Tab */}
@@ -309,6 +387,9 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
             <span>Skills & Certs</span>
+            {isTabMissing('skills') && (
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 absolute top-2 right-1 animate-pulse" />
+            )}
           </button>
         </div>
       </div>
@@ -390,10 +471,19 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full h-10 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none focus:border-purple-500 transition-colors"
+                    className={`w-full h-10 px-3 bg-zinc-950 border rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none transition-colors ${
+                      isFieldMissing('full_name')
+                        ? 'border-rose-500/80 focus:border-rose-500 shadow-sm shadow-rose-500/10'
+                        : 'border-zinc-800 focus:border-purple-500'
+                    }`}
                     placeholder="e.g. Jane Doe"
                     required
                   />
+                  {isFieldMissing('full_name') && (
+                    <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1 mt-1">
+                      <AlertCircle className="h-3 w-3" /> Required for job application
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Contact Email</label>
@@ -401,10 +491,19 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full h-10 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none focus:border-purple-500 transition-colors"
+                    className={`w-full h-10 px-3 bg-zinc-950 border rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none transition-colors ${
+                      isFieldMissing('email')
+                        ? 'border-rose-500/80 focus:border-rose-500 shadow-sm shadow-rose-500/10'
+                        : 'border-zinc-800 focus:border-purple-500'
+                    }`}
                     placeholder="e.g. jane.doe@example.com"
                     required
                   />
+                  {isFieldMissing('email') && (
+                    <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1 mt-1">
+                      <AlertCircle className="h-3 w-3" /> Required for job application
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Phone Number</label>
@@ -412,9 +511,18 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full h-10 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none focus:border-purple-500 transition-colors"
+                    className={`w-full h-10 px-3 bg-zinc-950 border rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none transition-colors ${
+                      isFieldMissing('phone')
+                        ? 'border-rose-500/80 focus:border-rose-500 shadow-sm shadow-rose-500/10'
+                        : 'border-zinc-800 focus:border-purple-500'
+                    }`}
                     placeholder="e.g. +1 555 123 4567"
                   />
+                  {isFieldMissing('phone') && (
+                    <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1 mt-1">
+                      <AlertCircle className="h-3 w-3" /> Required for job application
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Address / Location</label>
@@ -422,9 +530,18 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    className="w-full h-10 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none focus:border-purple-500 transition-colors"
+                    className={`w-full h-10 px-3 bg-zinc-950 border rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none transition-colors ${
+                      isFieldMissing('address')
+                        ? 'border-rose-500/80 focus:border-rose-500 shadow-sm shadow-rose-500/10'
+                        : 'border-zinc-800 focus:border-purple-500'
+                    }`}
                     placeholder="e.g. San Francisco, CA"
                   />
+                  {isFieldMissing('address') && (
+                    <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1 mt-1">
+                      <AlertCircle className="h-3 w-3" /> Required for job application
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Personal Website / Portfolio</label>
@@ -432,9 +549,18 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     type="url"
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
-                    className="w-full h-10 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none focus:border-purple-500 transition-colors"
+                    className={`w-full h-10 px-3 bg-zinc-950 border rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none transition-colors ${
+                      isFieldMissing('website')
+                        ? 'border-rose-500/80 focus:border-rose-500 shadow-sm shadow-rose-500/10'
+                        : 'border-zinc-800 focus:border-purple-500'
+                    }`}
                     placeholder="e.g. https://janedoe.dev"
                   />
+                  {isFieldMissing('website') && (
+                    <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1 mt-1">
+                      <AlertCircle className="h-3 w-3" /> Required for job application
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">GitHub Link</label>
@@ -442,9 +568,18 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     type="url"
                     value={github}
                     onChange={(e) => setGithub(e.target.value)}
-                    className="w-full h-10 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none focus:border-purple-500 transition-colors"
+                    className={`w-full h-10 px-3 bg-zinc-950 border rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none transition-colors ${
+                      isFieldMissing('github')
+                        ? 'border-rose-500/80 focus:border-rose-500 shadow-sm shadow-rose-500/10'
+                        : 'border-zinc-800 focus:border-purple-500'
+                    }`}
                     placeholder="e.g. https://github.com/janedoe"
                   />
+                  {isFieldMissing('github') && (
+                    <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1 mt-1">
+                      <AlertCircle className="h-3 w-3" /> Required for job application
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">LinkedIn Profile</label>
@@ -452,9 +587,18 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     type="url"
                     value={linkedin}
                     onChange={(e) => setLinkedin(e.target.value)}
-                    className="w-full h-10 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none focus:border-purple-500 transition-colors"
+                    className={`w-full h-10 px-3 bg-zinc-950 border rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none transition-colors ${
+                      isFieldMissing('linkedin')
+                        ? 'border-rose-500/80 focus:border-rose-500 shadow-sm shadow-rose-500/10'
+                        : 'border-zinc-800 focus:border-purple-500'
+                    }`}
                     placeholder="e.g. https://linkedin.com/in/janedoe"
                   />
+                  {isFieldMissing('linkedin') && (
+                    <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1 mt-1">
+                      <AlertCircle className="h-3 w-3" /> Required for job application
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Professional Summary</label>
@@ -462,9 +606,18 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     value={summary}
                     onChange={(e) => setSummary(e.target.value)}
                     rows={6}
-                    className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none focus:border-purple-500 transition-colors resize-y"
+                    className={`w-full p-3 bg-zinc-950 border rounded-lg text-sm text-zinc-100 placeholder-zinc-655 focus:outline-none transition-colors resize-y ${
+                      isFieldMissing('summary')
+                        ? 'border-rose-500/80 focus:border-rose-500 shadow-sm shadow-rose-500/10'
+                        : 'border-zinc-800 focus:border-purple-500'
+                    }`}
                     placeholder="Write a brief professional summary..."
                   />
+                  {isFieldMissing('summary') && (
+                    <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1 mt-1">
+                      <AlertCircle className="h-3 w-3" /> Required for job application
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

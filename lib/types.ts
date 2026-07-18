@@ -64,6 +64,10 @@ export interface DbJob {
   source_url: string | null;
   applied_status: boolean;
   saved_status: boolean;
+  application_status?: string;
+  required_fields?: any[] | null;
+  missing_fields?: string[] | null;
+  browserbase_session_id?: string | null;
   fetched_at: string;
   created_at: string;
 }
