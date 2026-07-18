@@ -1,10 +1,10 @@
 'use client'
 
 import React from 'react'
-import { Check, Layers, Briefcase, Globe, HelpCircle } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 interface Platform {
-  id: 'greenhouse' | 'lever' | 'workable' | 'wellfound'
+  id: 'greenhouse' | 'lever' | 'workable'
   name: string
   url: string
   color: string
@@ -71,28 +71,11 @@ export function JobPlatformCards({ selectedPlatforms, onTogglePlatform }: JobPla
           className="w-10 h-10 object-contain rounded-lg border border-zinc-800 bg-zinc-950 p-1 flex-shrink-0"
         />
       )
-    },
-    {
-      id: 'wellfound',
-      name: 'Wellfound',
-      url: 'wellfound.com',
-      color: 'text-purple-400',
-      borderColor: 'border-purple-500/30',
-      bgColor: 'bg-purple-500/10',
-      description: 'Formerly AngelList, best for startup & remote jobs.',
-      icon: (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img 
-          src="/platform/wellfound.jpeg" 
-          alt="Wellfound logo" 
-          className="w-10 h-10 object-contain rounded-lg border border-zinc-800 bg-zinc-950 p-1 flex-shrink-0"
-        />
-      )
     }
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       {platforms.map((platform) => {
         const isSelected = selectedPlatforms.includes(platform.id)
         return (
@@ -107,8 +90,7 @@ export function JobPlatformCards({ selectedPlatforms, onTogglePlatform }: JobPla
           >
             {/* Background Glow */}
             {isSelected && (
-              <div className="absolute top-[-50%] right-[-10%] h-[150px] w-[150px] rounded-full opacity-20 blur-[50px] pointer-events-none"
-                   style={{ backgroundColor: isSelected ? 'var(--purple-500)' : 'transparent' }} />
+              <div className="absolute top-[-50%] right-[-10%] h-[150px] w-[150px] rounded-full opacity-20 blur-[50px] pointer-events-none bg-purple-500" />
             )}
 
             {/* Selection Checkmark */}

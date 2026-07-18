@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 export interface DbJob {
   id: string
   user_id: string
-  platform: 'greenhouse' | 'lever' | 'workable' | 'wellfound'
+  platform: 'Greenhouse' | 'Lever' | 'Workable'
   title: string
   company: string
   company_logo: string | null
@@ -26,12 +26,24 @@ export interface DbJob {
   created_at: string
 }
 
-// Interface for raw search results from Brave Search API
-interface RawSearchResult {
+// Normalized Job interface as per requirement
+export interface Job {
+  id: string
   title: string
+  company: string
+  location?: string
+  platform: 'Greenhouse' | 'Lever' | 'Workable'
   url: string
-  description: string
-  platform: 'greenhouse' | 'lever' | 'workable' | 'wellfound'
+  snippet?: string
+  sourceDomain: string
+}
+
+// Interface for Serper API Organic results
+interface SerperOrganicResult {
+  title: string
+  link: string
+  snippet?: string
+  position?: number
 }
 
 // Fetch all jobs for the logged in user
@@ -115,29 +127,234 @@ export async function toggleAppliedJob(jobId: string, appliedStatus: boolean) {
   }
 }
 
-// Fetch jobs, handle caching, call Brave API, analyze with Gemini, and store in DB
-export async function fetchAndStoreJobs(selectedPlatforms: string[], forceRefresh: boolean = false) {
+// Helper to extract company name from search result details
+function extractCompanyName(title: string, url: string): string {
+  // 1. Try to extract from title patterns
+  if (title.includes(' at ')) {
+    const parts = title.split(' at ')
+    return cleanCompanySlug(parts[parts.length - 1])
+  }
+  if (title.includes(' - ')) {
+    const parts = title.split(' - ')
+    if (url.toLowerCase().includes(parts[0].toLowerCase().replace(/[^a-z0-9]/g, ''))) {
+      return parts[0].trim()
+    }
+    return cleanCompanySlug(parts[parts.length - 1])
+  }
+  if (title.includes(' | ')) {
+    const parts = title.split(' | ')
+    return cleanCompanySlug(parts[0])
+  }
+
+  // 2. Fallback to URL path segment (which represents the company slug on Greenhouse, Lever, Workable)
+  try {
+    const parsed = new URL(url)
+    const pathSegments = parsed.pathname.split('/').filter(Boolean)
+    if (pathSegments.length > 0) {
+      return cleanCompanySlug(pathSegments[0])
+    }
+  } catch {}
+
+  return 'Tech Company'
+}
+
+// Helper to clean slug to title case (e.g. "stripe-payments" -> "Stripe Payments")
+function cleanCompanySlug(slug: string): string {
+  let cleaned = slug.split(/[|:-]/)[0].trim()
+  cleaned = cleaned.replace(/[-_]/g, ' ')
+  // Remove file endings if any
+  cleaned = cleaned.replace(/\.(com|co|io|net|org)$/i, '')
+  return cleaned
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+// Helper to extract location from title or snippet
+function extractLocation(title: string, snippet: string): string {
+  const text = `${title} ${snippet}`.toLowerCase()
+  
+  if (text.includes('remote') || text.includes('anywhere') || text.includes('work from home')) {
+    return 'Remote'
+  }
+  
+  // Basic location matchers
+  const locations = [
+    { name: 'San Francisco, CA', keywords: ['san francisco', 'sf '] },
+    { name: 'New York, NY', keywords: ['new york', 'nyc', 'ny '] },
+    { name: 'London, UK', keywords: ['london', ' uk '] },
+    { name: 'Seattle, WA', keywords: ['seattle'] },
+    { name: 'Boston, MA', keywords: ['boston'] },
+    { name: 'Austin, TX', keywords: ['austin'] },
+    { name: 'Toronto, ON', keywords: ['toronto', 'canada'] },
+    { name: 'Berlin, DE', keywords: ['berlin', 'germany'] }
+  ]
+
+  for (const loc of locations) {
+    if (loc.keywords.some(kw => text.includes(kw))) {
+      return loc.name
+    }
+  }
+
+  return 'Remote / US'
+}
+
+// Helper to extract tags/skills from title or snippet
+function extractTags(title: string, snippet: string, profileSkills: string[]): string[] {
+  const text = `${title} ${snippet}`.toLowerCase()
+  const matched = profileSkills.filter(skill => text.includes(skill.toLowerCase()))
+  
+  // Defaults if no profile skills match
+  if (matched.length === 0) {
+    const common = ['React', 'Node.js', 'TypeScript', 'Python', 'AWS', 'API', 'Frontend', 'Backend']
+    const defaults = common.filter(c => text.includes(c.toLowerCase()))
+    return defaults.length > 0 ? defaults : ['Software Engineering']
+  }
+
+  return matched
+}
+
+// Generate high quality mock data tailored to the user profile using Serper specifications
+function generateMockJobsForProfile(
+  role: string,
+  skills: string[],
+  location: string,
+  limit: number = 30
+): Job[] {
+  const mockCompanies = [
+    'Stripe', 'Vercel', 'Linear', 'Supabase', 'Figma', 'Retool', 'Slack', 'Zoom',
+    'PostHog', 'Airtable', 'Notion', 'Webflow', 'HashiCorp', 'GitLab', 'GitHub',
+    'Brex', 'Ramp', 'Gusto', 'Plaid', 'Flexport', 'Bolt', 'Deel', 'Replit',
+    'Clerk', 'Resend', 'Neon', 'Upstash', 'Inngest', 'Turborepo', 'Sentry'
+  ]
+  const platforms: ('Greenhouse' | 'Lever' | 'Workable')[] = ['Greenhouse', 'Lever', 'Workable']
+  
+  return mockCompanies.slice(0, limit).map((company, i) => {
+    const platform = platforms[i % platforms.length]
+    const title = i === 0 ? `Senior ${role}` : i === 1 ? `Staff ${role}` : `${role} Developer`
+    const slug = company.toLowerCase()
+    
+    let url = ''
+    let sourceDomain = ''
+    if (platform === 'Greenhouse') {
+      url = `https://boards.greenhouse.io/${slug}/jobs/${100000 + i}`
+      sourceDomain = 'boards.greenhouse.io'
+    } else if (platform === 'Lever') {
+      url = `https://jobs.lever.co/${slug}/${100000 + i}`
+      sourceDomain = 'jobs.lever.co'
+    } else {
+      url = `https://apply.workable.com/${slug}/j/${100000 + i}`
+      sourceDomain = 'apply.workable.com'
+    }
+
+    return {
+      id: `mock-${i}`,
+      title,
+      company,
+      location: i % 2 === 0 ? location : 'Remote',
+      platform,
+      url,
+      snippet: `Join ${company} as a ${title}. We are seeking a developer skilled in ${skills.slice(0, 3).join(', ') || 'software engineering'} to join our core product team.`,
+      sourceDomain
+    }
+  })
+}
+
+// Helper function to query Serper API with query fallback for free accounts
+async function querySerper(apiKey: string, query: string, numResults: number) {
+  const response = await fetch('https://google.serper.dev/search', {
+    method: 'POST',
+    headers: {
+      'X-API-KEY': apiKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      q: query,
+      num: numResults
+    }),
+    next: { revalidate: 0 }
+  })
+
+  if (!response.ok) {
+    const errText = await response.text()
+    if (response.status === 400 && errText.toLowerCase().includes('query pattern not allowed')) {
+      return { fallback: true, organic: [] }
+    }
+    throw new Error(`Serper API error: ${response.statusText} - ${errText}`)
+  }
+
+  const data = await response.json()
+  return { success: true, fallback: false, organic: data.organic || [] }
+}
+
+// Fetch organic jobs from one specific platform domain with fallback for free tier
+async function searchForPlatform(
+  apiKey: string,
+  cleanKeyword: string,
+  platformName: 'Greenhouse' | 'Lever' | 'Workable',
+  domain: string,
+  numResults: number
+): Promise<{ platform: 'Greenhouse' | 'Lever' | 'Workable'; organic: SerperOrganicResult[] }> {
+  // Try standard site: operator search
+  const siteQuery = `${cleanKeyword} site:${domain}`
+  try {
+    const res = await querySerper(apiKey, siteQuery, numResults)
+    if (res.fallback) {
+      // Free accounts fallback: use plain keyword without "site:" prefix
+      console.warn(`Serper blocked site: query for ${domain} on free tier. Retrying with plain text keyword...`)
+      const fallbackQuery = `${cleanKeyword} ${domain}`
+      const fallbackRes = await querySerper(apiKey, fallbackQuery, numResults)
+      return { platform: platformName, organic: fallbackRes.organic }
+    }
+    return { platform: platformName, organic: res.organic }
+  } catch (err) {
+    console.error(`Error querying Serper for ${platformName} (${siteQuery}):`, err)
+    // Attempt absolute fallback with plain domain term
+    try {
+      const fallbackQuery = `${cleanKeyword} ${domain}`
+      const fallbackRes = await querySerper(apiKey, fallbackQuery, numResults)
+      return { platform: platformName, organic: fallbackRes.organic }
+    } catch {
+      return { platform: platformName, organic: [] }
+    }
+  }
+}
+
+// Main fetch and store action supporting Serper Search API
+export async function fetchAndStoreJobs(
+  selectedPlatforms: string[], 
+  forceRefresh: boolean = false, 
+  searchQueryText?: string
+) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Not authenticated' }
 
-    // 1. Get profile data to construct search terms
-    const { data: profile, error: profileError } = await supabase
+    // 1. Get profile data to construct query fallback
+    const { data: profile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle()
 
-    // 2. Check cached database jobs first
-    const { data: existingJobs, error: fetchJobsError } = await supabase
+    const profileSkills = profile?.skills || []
+    const profileExperience = profile?.experience || []
+    const profileAddress = profile?.address || ''
+    
+    // Parse default role
+    const role = profileExperience[0]?.title || 'Software Engineer'
+    const locationDefault = profileAddress.trim() || 'Remote'
+
+    // Determine query keyword
+    const searchKeyword = searchQueryText?.trim() || role
+
+    // 2. Check cached database jobs first (only if this is a default load without custom query and not forced)
+    const isCustomQuery = !!searchQueryText?.trim()
+    const { data: existingJobs } = await supabase
       .from('jobs')
       .select('*')
       .eq('user_id', user.id)
-
-    if (fetchJobsError) {
-      console.error('Error querying existing jobs:', fetchJobsError.message)
-    }
 
     const hasCachedJobs = existingJobs && existingJobs.length > 0
     let isCacheFresh = false
@@ -153,132 +370,150 @@ export async function fetchAndStoreJobs(selectedPlatforms: string[], forceRefres
       isCacheFresh = (Date.now() - latestFetchedAt) < sixHoursInMs
     }
 
-    // If cache is fresh and we aren't forcing a refresh, return what we have
-    if (hasCachedJobs && isCacheFresh && !forceRefresh) {
+    // If cache is fresh and we aren't forced or using a custom search input, serve cache
+    if (hasCachedJobs && isCacheFresh && !forceRefresh && !isCustomQuery) {
       console.log('Serving jobs from cache. Age:', Math.round((Date.now() - latestFetchedAt) / 60000), 'minutes')
       return { success: true, jobs: existingJobs as DbJob[], cached: true }
     }
 
-    console.log('Cache stale or force refreshed. Fetching new jobs...')
+    console.log(`Cache stale or search requested. Fetching up to 30 new jobs for "${searchKeyword}" from Serper...`)
 
-    // 3. Extract search query components from profile
-    const profileSkills = profile?.skills || []
-    const profileExperience = profile?.experience || []
-    const profileAddress = profile?.address || ''
-    const profileSummary = profile?.summary || ''
-    
-    // Parse role: latest job title or fallback
-    const role = profileExperience[0]?.title || 'Software Engineer'
-    
-    // Parse tech stack: top skills or fallback
-    const techStack = profileSkills.length > 0 ? profileSkills.slice(0, 3).join(' ') : 'React TypeScript Node.js'
-    
-    // Parse location: address or fallback
-    const location = profileAddress.trim() || 'Remote'
-    
-    // Parse job type: default to Remote/Full-time or scan summary/other details
-    let jobType = 'Remote'
-    if (profileSummary.toLowerCase().includes('hybrid')) {
-      jobType = 'Hybrid'
-    } else if (profileSummary.toLowerCase().includes('on-site') || profileSummary.toLowerCase().includes('onsite')) {
-      jobType = 'On-site'
-    }
-
-    const searchQueryParams = `${techStack} ${role} ${jobType} ${location}`
-    const platformsToSearch = selectedPlatforms.length > 0 ? selectedPlatforms : ['greenhouse', 'lever', 'workable', 'wellfound']
-    
-    const braveApiKey = process.env.BRAVE_API_KEY
-    let jobsToSave: Omit<DbJob, 'id' | 'user_id' | 'applied_status' | 'saved_status' | 'fetched_at' | 'created_at'>[] = []
+    const serperApiKey = process.env.SERPER_API_KEY
+    let rawJobsList: Job[] = []
     let isMockFallback = false
 
-    // 4. Fetch from Brave Search API or Mock fallback
-    if (!braveApiKey) {
-      console.warn('BRAVE_API_KEY is not defined in environment variables. Generating mock jobs based on profile.')
+    if (!serperApiKey) {
+      console.warn('SERPER_API_KEY is not defined in environment variables. Generating mock jobs.')
       isMockFallback = true
-      jobsToSave = generateMockJobsForProfile(role, profileSkills, location, jobType, platformsToSearch)
+      rawJobsList = generateMockJobsForProfile(searchKeyword, profileSkills, locationDefault, 30)
     } else {
       try {
-        const rawResults: RawSearchResult[] = []
-        
-        // Execute parallel requests for each selected platform
-        await Promise.all(
-          platformsToSearch.map(async (platform) => {
-            const domain = getPlatformDomain(platform)
-            const query = `site:${domain} ${searchQueryParams}`
-            const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`
+        // Remove special search chars that might crash Serper free accounts (like quotes or parentheses)
+        const cleanKeyword = searchKeyword
+          .replace(/[\"\'\(\)]/g, '')
+          .trim()
 
-            try {
-              const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                  'Accept': 'application/json',
-                  'X-Subscription-Token': braveApiKey,
-                },
-                next: { revalidate: 0 } // Bypass standard fetch cache
-              })
+        // 3. Define target domains separately to perform queries concurrently
+        const platformsToSearch = [
+          { name: 'Greenhouse' as const, domain: 'boards.greenhouse.io' },
+          { name: 'Lever' as const, domain: 'jobs.lever.co' },
+          { name: 'Workable' as const, domain: 'apply.workable.com' }
+        ]
 
-              if (!response.ok) {
-                console.error(`Brave API error for platform ${platform}:`, response.statusText)
-                return
-              }
-
-              const data = await response.json()
-              const results = data.web?.results || []
-
-              results.forEach((res: any) => {
-                // Ensure URL contains the platform domain to filter out garbage results
-                if (res.url && res.url.toLowerCase().includes(platform === 'wellfound' ? 'wellfound' : platform)) {
-                  rawResults.push({
-                    title: res.title,
-                    url: res.url,
-                    description: res.description || '',
-                    platform: platform as 'greenhouse' | 'lever' | 'workable' | 'wellfound'
-                  })
-                }
-              })
-            } catch (platformErr) {
-              console.error(`Error fetching for platform ${platform}:`, platformErr)
-            }
-          })
+        // 4. Run multiple searches concurrently using Promise.all()
+        // Request up to 15 results per platform to allow filters to reach the 30 unique job target
+        const searchPromises = platformsToSearch.map(platform =>
+          searchForPlatform(serperApiKey, cleanKeyword, platform.name, platform.domain, 20)
         )
 
-        if (rawResults.length === 0) {
-          console.warn('No search results returned from Brave Search API. Falling back to mock jobs.')
-          isMockFallback = true
-          jobsToSave = generateMockJobsForProfile(role, profileSkills, location, jobType, platformsToSearch)
-        } else {
-          // 5. Use Gemini to parse and normalize search results
-          const geminiKey = process.env.GEMINI_API_KEY
-          if (!geminiKey) {
-            console.warn('GEMINI_API_KEY is missing. Using heuristic parser.')
-            jobsToSave = parseResultsHeuristically(rawResults, profileSkills)
-          } else {
-            try {
-              const parsedJobs = await parseResultsWithGemini(rawResults, profile, geminiKey)
-              if (parsedJobs && parsedJobs.length > 0) {
-                jobsToSave = parsedJobs
-              } else {
-                console.warn('Gemini parsing returned empty or invalid results. Using heuristic parser.')
-                jobsToSave = parseResultsHeuristically(rawResults, profileSkills)
-              }
-            } catch (geminiErr) {
-              console.error('Error parsing results with Gemini, falling back to heuristics:', geminiErr)
-              jobsToSave = parseResultsHeuristically(rawResults, profileSkills)
+        const searchResults = await Promise.all(searchPromises)
+
+        // 5. Merge all returned results and normalize
+        searchResults.forEach(({ platform, organic }) => {
+          organic.forEach((res, index) => {
+            const link = res.link || ''
+            let matchedPlatform: 'Greenhouse' | 'Lever' | 'Workable' | null = null
+            let sourceDomain = ''
+
+            // Detect matching domains and normalize platform labels
+            if (link.includes('boards.greenhouse.io') || link.includes('job-boards.greenhouse.io')) {
+              matchedPlatform = 'Greenhouse'
+              sourceDomain = 'boards.greenhouse.io'
+            } else if (link.includes('jobs.lever.co')) {
+              matchedPlatform = 'Lever'
+              sourceDomain = 'jobs.lever.co'
+            } else if (link.includes('apply.workable.com')) {
+              matchedPlatform = 'Workable'
+              sourceDomain = 'apply.workable.com'
             }
-          }
+
+            if (matchedPlatform && sourceDomain) {
+              rawJobsList.push({
+                id: `serper-${matchedPlatform.toLowerCase()}-${index}-${Math.random().toString(36).substr(2, 4)}`,
+                title: res.title,
+                company: extractCompanyName(res.title, link),
+                location: extractLocation(res.title, res.snippet || ''),
+                platform: matchedPlatform,
+                url: link,
+                snippet: res.snippet || '',
+                sourceDomain
+              })
+            }
+          })
+        })
+
+        if (rawJobsList.length === 0) {
+          console.warn('Serper API returned zero matching platform results. Falling back to mock jobs.')
+          isMockFallback = true
+          rawJobsList = generateMockJobsForProfile(searchKeyword, profileSkills, locationDefault, 30)
         }
-      } catch (searchErr) {
-        console.error('Error during job search flow:', searchErr)
-        isMockFallback = true
-        jobsToSave = generateMockJobsForProfile(role, profileSkills, location, jobType, platformsToSearch)
+      } catch (serperErr: any) {
+        console.error('Error during Serper API search:', serperErr)
+        return { error: `Job search service failed: ${serperErr.message || 'Check network connection'}` }
       }
     }
 
-    // 6. Update database: Delete old unsaved/unapplied jobs and insert new ones
-    // First, verify which jobs are saved or applied to preserve them
+    // 6. Deduplicate jobs based on URL
+    const uniqueJobsMap = new Map<string, Job>()
+    rawJobsList.forEach(job => {
+      if (!uniqueJobsMap.has(job.url)) {
+        uniqueJobsMap.set(job.url, job)
+      }
+    })
+    const deduplicatedJobs = Array.from(uniqueJobsMap.values())
+
+    // 7. Map deduplicated list to DB schema and slice to a MAXIMUM of 30 unique jobs
+    const jobsToInsert = deduplicatedJobs.slice(0, 30).map(job => {
+      const cleanTitle = job.title.toLowerCase()
+      const cleanSnippet = (job.snippet || '').toLowerCase()
+      const queryLower = searchKeyword.toLowerCase()
+
+      let score = 50 // Base relevance score
+
+      // Direct query match in title
+      if (cleanTitle.includes(queryLower)) score += 25
+      // Direct query match in snippet
+      else if (cleanSnippet.includes(queryLower)) score += 10
+
+      // Match profile skills
+      const matchedSkills = profileSkills.filter((skill: string) => 
+        cleanTitle.includes(skill.toLowerCase()) || 
+        cleanSnippet.includes(skill.toLowerCase())
+      )
+      score += matchedSkills.length * 8
+
+      // Cap relevance score between 45 and 98
+      const finalScore = Math.max(45, Math.min(score, 98))
+      const tags = extractTags(job.title, job.snippet || '', profileSkills)
+
+      return {
+        user_id: user.id,
+        platform: job.platform,
+        title: job.title,
+        company: job.company,
+        company_logo: `https://logo.clearbit.com/${job.company.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+        location: job.location || 'Remote',
+        salary: null,
+        job_type: (job.snippet || '').toLowerCase().includes('hybrid') ? 'Hybrid' : ((job.snippet || '').toLowerCase().includes('on-site') ? 'On-site' : 'Remote'),
+        experience_level: cleanTitle.includes('senior') ? 'Senior' : (cleanTitle.includes('lead') ? 'Lead' : (cleanTitle.includes('junior') ? 'Entry' : 'Mid')),
+        description: job.snippet || '',
+        tags,
+        match_score: finalScore,
+        job_url: job.url,
+        source_url: job.sourceDomain,
+        applied_status: false,
+        saved_status: false,
+        fetched_at: new Date().toISOString()
+      }
+    })
+
+    // 8. Sort jobs by relevance match score descending
+    jobsToInsert.sort((a, b) => b.match_score - a.match_score)
+
+    // 9. Update Database: Clear old unsaved/unapplied jobs and insert new ones
+    // Preserve saved/applied jobs
     const savedOrAppliedJobs = existingJobs?.filter(job => job.saved_status || job.applied_status) || []
-    
-    // Clear out old unsaved/unapplied jobs
+
     const { error: deleteError } = await supabase
       .from('jobs')
       .delete()
@@ -290,39 +525,18 @@ export async function fetchAndStoreJobs(selectedPlatforms: string[], forceRefres
       console.error('Error clearing old jobs:', deleteError.message)
     }
 
-    // Insert new jobs
-    if (jobsToSave.length > 0) {
-      const recordsToInsert = jobsToSave.map(job => ({
-        user_id: user.id,
-        platform: job.platform,
-        title: job.title,
-        company: job.company,
-        company_logo: job.company_logo || `https://logo.clearbit.com/${extractDomain(job.job_url)}`,
-        location: job.location,
-        salary: job.salary,
-        job_type: job.job_type,
-        experience_level: job.experience_level,
-        description: job.description,
-        tags: job.tags,
-        match_score: job.match_score,
-        job_url: job.job_url,
-        source_url: job.job_url,
-        applied_status: false,
-        saved_status: false,
-        fetched_at: new Date().toISOString()
-      }))
-
+    if (jobsToInsert.length > 0) {
       const { error: insertError } = await supabase
         .from('jobs')
-        .insert(recordsToInsert)
+        .insert(jobsToInsert)
 
       if (insertError) {
         console.error('Error inserting new jobs:', insertError.message)
-        return { error: `Failed to insert new jobs: ${insertError.message}` }
+        return { error: `Failed to save job matches: ${insertError.message}` }
       }
     }
 
-    // Fetch the updated list (combination of saved/applied jobs and newly fetched ones)
+    // Retrieve final combined list from DB
     const { data: finalJobs, error: finalError } = await supabase
       .from('jobs')
       .select('*')
@@ -330,7 +544,6 @@ export async function fetchAndStoreJobs(selectedPlatforms: string[], forceRefres
       .order('match_score', { ascending: false })
 
     if (finalError) {
-      console.error('Error fetching final jobs:', finalError.message)
       return { error: finalError.message }
     }
 
@@ -345,241 +558,4 @@ export async function fetchAndStoreJobs(selectedPlatforms: string[], forceRefres
     console.error('Catch error in fetchAndStoreJobs:', err)
     return { error: err.message || 'Unknown error occurred' }
   }
-}
-
-// Get Brave Search domain for the platform
-function getPlatformDomain(platform: string): string {
-  switch (platform) {
-    case 'greenhouse': return 'greenhouse.io/jobs'
-    case 'lever': return 'lever.co/jobs'
-    case 'workable': return 'workable.com/jobs'
-    case 'wellfound': return 'wellfound.com/jobs'
-    default: return 'greenhouse.io/jobs'
-  }
-}
-
-// Heuristic domain extractor
-function extractDomain(url: string): string {
-  try {
-    const parsed = new URL(url)
-    return parsed.hostname
-  } catch {
-    return 'company.com'
-  }
-}
-
-// Call Gemini API to parse and match jobs
-async function parseResultsWithGemini(
-  rawResults: RawSearchResult[],
-  profile: any,
-  apiKey: string
-): Promise<Omit<DbJob, 'id' | 'user_id' | 'applied_status' | 'saved_status' | 'fetched_at' | 'created_at'>[] | null> {
-  const models = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-pro-latest']
-  
-  const systemInstruction = `You are a job parser AI.
-Normalize the provided raw job search results into a clean list of job opportunity objects.
-For each result, calculate a match score (0-100) based on how well the job requirements match the user's profile.
-- Look at user's skills, experience titles, and summary.
-- Compute a matching score: High matching skills and role titles should score > 85. Partially matching should score 60-84. Unrelated should score < 60.
-- Extract details such as Company, Job Title, Location, Salary (if mentioned, otherwise null), Job Type (Remote, Hybrid, On-site, or null), Experience Level (Entry, Mid, Senior, Lead, or null), Description (short summaries), and Tags (list of technologies or skills required).
-
-User Profile Details:
-- Skills: ${JSON.stringify(profile?.skills || [])}
-- Experience: ${JSON.stringify(profile?.experience || [])}
-- Summary: ${profile?.summary || ''}
-- Education: ${JSON.stringify(profile?.education || [])}
-
-Input Search Results:
-${JSON.stringify(rawResults)}
-
-Ensure all items are output as valid JSON.
-Do not include markdown tags (\`\`\`json blocks) or explanations. Output ONLY valid JSON array.`
-
-  for (const model of models) {
-    try {
-      console.log(`Analyzing job search results with Gemini model: ${model}`)
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: systemInstruction }] }],
-          generationConfig: { responseMimeType: 'application/json' }
-        })
-      })
-
-      if (response.ok) {
-        const json = await response.json()
-        const text = json.candidates?.[0]?.content?.parts?.[0]?.text
-        if (text) {
-          return JSON.parse(text)
-        }
-      } else {
-        const errText = await response.text()
-        console.warn(`Gemini API error with model ${model}:`, errText)
-      }
-    } catch (e: any) {
-      console.error(`Gemini Model ${model} failed:`, e.message)
-    }
-  }
-  return null
-}
-
-// Fallback rule-based parsing of search results if Gemini is unavailable
-function parseResultsHeuristically(
-  rawResults: RawSearchResult[],
-  skills: string[]
-): Omit<DbJob, 'id' | 'user_id' | 'applied_status' | 'saved_status' | 'fetched_at' | 'created_at'>[] {
-  return rawResults.map(res => {
-    let company = 'Unknown Company'
-    let title = res.title
-
-    if (res.title.includes(' at ')) {
-      const parts = res.title.split(' at ')
-      title = parts[0].trim()
-      company = parts[1].split(/[-|]/)[0].trim()
-    } else if (res.title.includes(' - ')) {
-      const parts = res.title.split(' - ')
-      company = parts[0].trim()
-      title = parts[1].trim()
-    } else if (res.title.includes(' | ')) {
-      const parts = res.title.split(' | ')
-      title = parts[0].trim()
-      company = parts[1].trim()
-    }
-
-    // Location heuristics
-    let location = 'Remote'
-    if (res.description.toLowerCase().includes('london')) location = 'London, UK'
-    else if (res.description.toLowerCase().includes('new york') || res.description.toLowerCase().includes('ny')) location = 'New York, NY'
-    else if (res.description.toLowerCase().includes('san francisco') || res.description.toLowerCase().includes('sf')) location = 'San Francisco, CA'
-    else if (res.description.toLowerCase().includes('seattle')) location = 'Seattle, WA'
-    else if (res.description.toLowerCase().includes('boston')) location = 'Boston, MA'
-
-    // Job Type
-    let jobType = 'Remote'
-    if (res.description.toLowerCase().includes('hybrid')) jobType = 'Hybrid'
-    else if (res.description.toLowerCase().includes('on-site') || res.description.toLowerCase().includes('onsite')) jobType = 'On-site'
-
-    // Experience level
-    let expLevel = 'Senior'
-    if (title.toLowerCase().includes('junior') || title.toLowerCase().includes('associate') || title.toLowerCase().includes('entry')) expLevel = 'Entry'
-    else if (title.toLowerCase().includes('lead') || title.toLowerCase().includes('principal') || title.toLowerCase().includes('staff')) expLevel = 'Lead'
-    else if (title.toLowerCase().includes('mid') || title.toLowerCase().includes('developer')) expLevel = 'Mid'
-
-    // Match Score
-    const matchedSkills = skills.filter(skill => 
-      title.toLowerCase().includes(skill.toLowerCase()) || 
-      res.description.toLowerCase().includes(skill.toLowerCase())
-    )
-    const matchScore = Math.min(65 + (matchedSkills.length * 10), 98)
-
-    // Salary extraction
-    let salary = null
-    const salaryRegex = /(\$\d{2,3},?\d{3}|\$\d{2,3}k)/gi
-    const salaryMatches = res.description.match(salaryRegex)
-    if (salaryMatches && salaryMatches.length > 0) {
-      salary = salaryMatches.slice(0, 2).join(' - ')
-    }
-
-    return {
-      title,
-      company,
-      company_logo: null,
-      location,
-      salary,
-      job_type: jobType,
-      experience_level: expLevel,
-      description: res.description.slice(0, 250) + (res.description.length > 250 ? '...' : ''),
-      tags: matchedSkills.length > 0 ? matchedSkills : (skills.length > 0 ? skills.slice(0, 3) : ['Engineering']),
-      match_score: matchScore,
-      job_url: res.url,
-      source_url: res.url,
-      platform: res.platform
-    }
-  })
-}
-
-// Generate high quality mock data tailored to the user profile
-function generateMockJobsForProfile(
-  role: string,
-  skills: string[],
-  location: string,
-  jobType: string,
-  platforms: string[]
-): Omit<DbJob, 'id' | 'user_id' | 'applied_status' | 'saved_status' | 'fetched_at' | 'created_at'>[] {
-  const mockCompanies = [
-    { name: 'Stripe', logoDomain: 'stripe.com' },
-    { name: 'Vercel', logoDomain: 'vercel.com' },
-    { name: 'Linear', logoDomain: 'linear.app' },
-    { name: 'Supabase', logoDomain: 'supabase.com' },
-    { name: 'Figma', logoDomain: 'figma.com' },
-    { name: 'Retool', logoDomain: 'retool.com' },
-    { name: 'Notion', logoDomain: 'notion.so' },
-    { name: 'Airbnb', logoDomain: 'airbnb.com' }
-  ]
-
-  const mockJobs: Omit<DbJob, 'id' | 'user_id' | 'applied_status' | 'saved_status' | 'fetched_at' | 'created_at'>[] = []
-  
-  const totalJobs = Math.max(4, platforms.length * 2)
-  for (let i = 0; i < totalJobs; i++) {
-    const platform = platforms[i % platforms.length] as 'greenhouse' | 'lever' | 'workable' | 'wellfound'
-    const companyInfo = mockCompanies[i % mockCompanies.length]
-    
-    let finalTitle = role
-    if (i === 0) finalTitle = `Senior ${role}`
-    if (i === 1) finalTitle = `Staff ${role}`
-    if (i === 2) finalTitle = `Full Stack ${role}`
-    if (i === 3 && role.toLowerCase().includes('developer')) finalTitle = role.replace(/developer/i, 'Engineer')
-
-    let score = 95 - (i * 6)
-    if (score < 55) score = 55
-
-    const jobTypes = ['Remote', 'Hybrid', 'On-site']
-    const finalJobType = i % 3 === 0 ? jobType : jobTypes[i % 3]
-
-    const locations = [location, 'San Francisco, CA', 'New York, NY', 'Seattle, WA', 'Remote']
-    const finalLocation = i === 0 ? location : locations[i % locations.length]
-
-    const salaries = [
-      '$140,000 - $180,000',
-      '$130,000 - $160,000',
-      '$150,000 - $190,000',
-      '$110,000 - $145,000',
-      null
-    ]
-    const finalSalary = salaries[i % salaries.length]
-
-    const levels = ['Senior', 'Mid', 'Lead', 'Entry']
-    const finalExpLevel = i === 1 ? 'Lead' : (i === 0 ? 'Senior' : levels[i % levels.length])
-
-    const finalTags = [...skills]
-    if (finalTags.length === 0) {
-      finalTags.push('React', 'TypeScript', 'Node.js')
-    }
-    if (i % 2 === 0) finalTags.push('API Design')
-    if (i % 3 === 0) finalTags.push('Next.js')
-
-    const platformUrlSlug = companyInfo.name.toLowerCase().replace(/\s+/g, '-')
-    const jobUrl = `https://${platform === 'greenhouse' ? 'boards.greenhouse.io' : (platform === 'lever' ? 'jobs.lever.co' : (platform === 'workable' ? 'apply.workable.com' : 'wellfound.com/company'))}/${platformUrlSlug}/jobs/${100000 + i}`
-
-    mockJobs.push({
-      title: finalTitle,
-      company: companyInfo.name,
-      company_logo: `https://logo.clearbit.com/${companyInfo.logoDomain}`,
-      location: finalLocation,
-      salary: finalSalary,
-      job_type: finalJobType,
-      experience_level: finalExpLevel,
-      description: `Join ${companyInfo.name} as a ${finalTitle}. We are seeking a talented developer to work with our core product engineering team. You will build and scale high-performance user interfaces and backend integrations using ${finalTags.slice(0, 3).join(', ')}.`,
-      tags: finalTags.slice(0, 4),
-      match_score: score,
-      job_url: jobUrl,
-      source_url: jobUrl,
-      platform
-    })
-  }
-
-  return mockJobs
 }

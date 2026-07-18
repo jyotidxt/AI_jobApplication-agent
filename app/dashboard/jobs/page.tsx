@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function JobsPage() {
   const profile = await getUserProfile()
-  const initialPlatforms = ['greenhouse', 'lever', 'workable', 'wellfound']
+  const initialPlatforms = ['greenhouse', 'lever', 'workable']
   
   let initialJobs: any[] = []
   let initialIsMock = false
