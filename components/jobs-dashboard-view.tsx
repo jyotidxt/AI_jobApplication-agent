@@ -14,7 +14,9 @@ import {
   Activity, 
   Briefcase, 
   HelpCircle,
-  AlertCircle
+  AlertCircle,
+  Search,
+  X
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -37,6 +39,7 @@ export function JobsDashboardView({ initialJobs, initialProfile, initialIsMock }
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isMock, setIsMock] = useState(initialIsMock)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Compute profile completeness score
   const getProfileCompleteness = () => {
@@ -143,8 +146,21 @@ export function JobsDashboardView({ initialJobs, initialProfile, initialIsMock }
     return `${skills} • ${role} • ${loc}`
   }
 
-  // Filter display jobs based on selected platform state
-  const displayedJobs = jobs.filter(job => selectedPlatforms.includes(job.platform))
+  // Filter display jobs based on selected platform state and search query
+  const displayedJobs = jobs.filter(job => {
+    const matchesPlatform = selectedPlatforms.includes(job.platform)
+    if (!matchesPlatform) return false
+
+    if (!searchQuery.trim()) return true
+
+    const query = searchQuery.toLowerCase()
+    const matchesTitle = job.title.toLowerCase().includes(query)
+    const matchesCompany = job.company.toLowerCase().includes(query)
+    const matchesLocation = job.location?.toLowerCase().includes(query) || false
+    const matchesTags = job.tags?.some(tag => tag.toLowerCase().includes(query)) || false
+
+    return matchesTitle || matchesCompany || matchesLocation || matchesTags
+  })
 
   // Saved and applied counters for activity feed
   const savedCount = jobs.filter(j => j.saved_status).length
@@ -282,6 +298,27 @@ export function JobsDashboardView({ initialJobs, initialProfile, initialIsMock }
             </div>
           </div>
 
+          {/* Search Input Bar */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search jobs by title, company, location, or tech stack..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-zinc-900 bg-zinc-950/40 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 focus:bg-zinc-950 transition-all text-xs font-semibold shadow-inner"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                title="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
           {/* Job feed container */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -320,7 +357,7 @@ export function JobsDashboardView({ initialJobs, initialProfile, initialIsMock }
                 Try Again
               </button>
             </div>
-          ) : displayedJobs.length === 0 ? (
+          ) : jobs.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-950/10 p-12 text-center flex flex-col items-center justify-center min-h-[350px]">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-purple-500/10 text-purple-400 mb-4 shadow-lg shadow-purple-500/5">
                 <Briefcase className="h-7 w-7" />
@@ -343,6 +380,25 @@ export function JobsDashboardView({ initialJobs, initialProfile, initialIsMock }
                   Force Search
                 </button>
               </div>
+            </div>
+          ) : displayedJobs.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-950/10 p-12 text-center flex flex-col items-center justify-center min-h-[350px]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 text-zinc-400 mb-4 border border-zinc-800 shadow-md">
+                <Search className="h-6 w-6" />
+              </div>
+              <h4 className="text-lg font-bold text-white">No search matches found</h4>
+              <p className="mt-2 text-xs text-zinc-500 max-w-sm leading-relaxed">
+                No jobs match your active platforms or search term "{searchQuery}". Try selecting more platforms or clearing the search.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('')
+                  setSelectedPlatforms(['greenhouse', 'lever', 'workable', 'wellfound'])
+                }}
+                className="mt-5 inline-flex h-9 items-center justify-center rounded-lg bg-purple-600 hover:bg-purple-500 px-4 text-xs font-bold text-white transition-colors"
+              >
+                Clear Search & Platforms
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -373,46 +429,97 @@ export function JobsDashboardView({ initialJobs, initialProfile, initialIsMock }
                 A completed profile enables highly accurate job matches.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-bold">
-                  <span className="text-zinc-400">Current Score</span>
-                  <span className={completenessScore >= 80 ? 'text-emerald-400' : completenessScore >= 50 ? 'text-amber-400' : 'text-rose-400'}>
-                    {completenessScore}%
-                  </span>
+            <CardContent className="space-y-6">
+              {/* Circular Gauge and Info Header */}
+              <div className="flex items-center gap-5 p-4 rounded-2xl bg-zinc-900/10 border border-zinc-900/60 shadow-inner">
+                {/* SVG Progress Circle */}
+                <div className="relative h-20 w-20 flex-shrink-0">
+                  <svg className="h-full w-full transform -rotate-90 origin-center" viewBox="0 0 80 80">
+                    {/* Background circle */}
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r={32}
+                      className="stroke-zinc-800/80"
+                      strokeWidth="6"
+                      fill="transparent"
+                    />
+                    {/* Progress arc */}
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r={32}
+                      className={`transition-all duration-1000 ease-out ${
+                        completenessScore >= 80 ? 'stroke-emerald-500' : completenessScore >= 50 ? 'stroke-amber-500' : 'stroke-purple-500'
+                      }`}
+                      strokeWidth="6"
+                      fill="transparent"
+                      strokeDasharray={2 * Math.PI * 32}
+                      strokeDashoffset={2 * Math.PI * 32 - (completenessScore / 100) * (2 * Math.PI * 32)}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  {/* Score Label inside Circle */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-base font-black text-white leading-none">
+                      {completenessScore}%
+                    </span>
+                    <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5">
+                      score
+                    </span>
+                  </div>
                 </div>
-                <div className="h-2 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/40">
-                  <div 
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      completenessScore >= 80 ? 'bg-emerald-500' : completenessScore >= 50 ? 'bg-amber-500' : 'bg-rose-500'
-                    }`}
-                    style={{ width: `${completenessScore}%` }}
-                  />
+
+                {/* Subtitle details */}
+                <div className="space-y-1">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${
+                    completenessScore >= 80 
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                      : completenessScore >= 50 
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
+                      : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                  }`}>
+                    {completenessScore >= 80 ? 'Optimized' : completenessScore >= 50 ? 'In Progress' : 'Action Required'}
+                  </span>
+                  <h4 className="text-xs font-semibold text-zinc-400 mt-2">
+                    {completenessScore === 100 
+                      ? 'Profile fully complete!' 
+                      : `${missingFields.length} action items`}
+                  </h4>
+                  <p className="text-[10px] text-zinc-500 leading-normal">
+                    Complete your profile to unlock highly targeted 90%+ job matches.
+                  </p>
                 </div>
               </div>
 
               {missingFields.length > 0 ? (
-                <div className="space-y-3 pt-2">
-                  <h5 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Next Actions:</h5>
-                  <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+                <div className="space-y-3">
+                  <h5 className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Next Actions:</h5>
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
                     {missingFields.map((field) => (
                       <Link
                         key={field.field}
                         href="/dashboard/profile"
-                        className="flex items-center justify-between p-2 rounded-xl bg-zinc-900/30 border border-zinc-900 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all text-xs font-semibold text-zinc-300 group"
+                        className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/30 border border-zinc-900/80 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all duration-300 text-xs font-semibold text-zinc-300 group"
                       >
-                        <span className="group-hover:text-purple-400 transition-colors">Add {field.name}</span>
-                        <span className="text-[10px] text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 flex items-center gap-1">
-                          +{field.bonus}% <ArrowRight className="h-2.5 w-2.5" />
+                        <div className="flex items-center gap-2">
+                          <span className="w-4 h-4 rounded-full border border-dashed border-purple-500/30 flex items-center justify-center flex-shrink-0 group-hover:border-purple-400 group-hover:bg-purple-500/10 transition-colors">
+                            <span className="w-1.5 h-1.5 rounded-full bg-purple-500/30 group-hover:bg-purple-400 transition-colors" />
+                          </span>
+                          <span className="group-hover:text-purple-300 transition-colors font-medium">Add {field.name}</span>
+                        </div>
+                        <span className="text-[10px] font-extrabold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all duration-300 group-hover:bg-purple-600 group-hover:text-white group-hover:border-purple-600">
+                          +{field.bonus}%
+                          <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                         </span>
                       </Link>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 p-3 bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs">
-                  <CheckCircle2 className="h-4.5 w-4.5 flex-shrink-0" />
-                  <span>Congratulations! Your profile details are 100% complete and fully optimized.</span>
+                <div className="flex items-center gap-2.5 p-3.5 bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs leading-relaxed font-medium">
+                  <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-500" />
+                  <span>Congratulations! Your profile is 100% complete and fully optimized.</span>
                 </div>
               )}
             </CardContent>

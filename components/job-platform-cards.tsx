@@ -30,9 +30,12 @@ export function JobPlatformCards({ selectedPlatforms, onTogglePlatform }: JobPla
       bgColor: 'bg-emerald-500/10',
       description: 'Popular for mid-size to enterprise tech companies.',
       icon: (
-        <svg className="w-6 h-6 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-        </svg>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img 
+          src="/platform/greenhouse.jpeg" 
+          alt="Greenhouse logo" 
+          className="w-10 h-10 object-contain rounded-lg border border-zinc-800 bg-zinc-950 p-1 flex-shrink-0"
+        />
       )
     },
     {
@@ -44,10 +47,12 @@ export function JobPlatformCards({ selectedPlatforms, onTogglePlatform }: JobPla
       bgColor: 'bg-orange-500/10',
       description: 'Widely used by startups and high-growth scale-ups.',
       icon: (
-        <svg className="w-6 h-6 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-          <line x1="4" y1="22" x2="4" y2="15" />
-        </svg>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img 
+          src="/platform/lever.png" 
+          alt="Lever logo" 
+          className="w-10 h-10 object-contain rounded-lg border border-zinc-800 bg-zinc-950 p-1 flex-shrink-0"
+        />
       )
     },
     {
@@ -59,10 +64,12 @@ export function JobPlatformCards({ selectedPlatforms, onTogglePlatform }: JobPla
       bgColor: 'bg-blue-500/10',
       description: 'Global recruiting platform with varied opportunities.',
       icon: (
-        <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-        </svg>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img 
+          src="/platform/workable.png" 
+          alt="Workable logo" 
+          className="w-10 h-10 object-contain rounded-lg border border-zinc-800 bg-zinc-950 p-1 flex-shrink-0"
+        />
       )
     },
     {
@@ -74,9 +81,12 @@ export function JobPlatformCards({ selectedPlatforms, onTogglePlatform }: JobPla
       bgColor: 'bg-purple-500/10',
       description: 'Formerly AngelList, best for startup & remote jobs.',
       icon: (
-        <svg className="w-6 h-6 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        </svg>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img 
+          src="/platform/wellfound.jpeg" 
+          alt="Wellfound logo" 
+          className="w-10 h-10 object-contain rounded-lg border border-zinc-800 bg-zinc-950 p-1 flex-shrink-0"
+        />
       )
     }
   ]
