@@ -34,15 +34,13 @@ export function JobCard({ job, onSaveToggle }: JobCardProps) {
 
   // Get platform specific badge styling
   const getPlatformStyle = (platform: string) => {
-    switch (platform) {
+    switch (platform.toLowerCase()) {
       case 'greenhouse':
         return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
       case 'lever':
         return 'bg-orange-500/10 text-orange-400 border-orange-500/20'
       case 'workable':
         return 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-      case 'wellfound':
-        return 'bg-purple-500/10 text-purple-400 border-purple-500/20'
       default:
         return 'bg-zinc-800 text-zinc-400 border-zinc-700'
     }
@@ -99,11 +97,9 @@ export function JobCard({ job, onSaveToggle }: JobCardProps) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={
-                job.platform === 'wellfound'
-                  ? '/platform/wellfound.jpeg'
-                  : job.platform === 'greenhouse'
+                job.platform.toLowerCase() === 'greenhouse'
                   ? '/platform/greenhouse.jpeg'
-                  : job.platform === 'workable'
+                  : job.platform.toLowerCase() === 'workable'
                   ? '/platform/workable.png'
                   : '/platform/lever.png'
               }

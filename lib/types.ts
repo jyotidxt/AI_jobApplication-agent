@@ -49,7 +49,7 @@ export interface Resume {
 export interface DbJob {
   id: string;
   user_id: string;
-  platform: 'greenhouse' | 'lever' | 'workable' | 'wellfound';
+  platform: 'Greenhouse' | 'Lever' | 'Workable';
   title: string;
   company: string;
   company_logo: string | null;
