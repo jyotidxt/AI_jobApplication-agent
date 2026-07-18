@@ -95,8 +95,22 @@ export function JobCard({ job, onSaveToggle }: JobCardProps) {
       <div>
         {/* Header - Platform & Match Score */}
         <div className="flex items-center justify-between mb-4 gap-2">
-          <Badge className={`text-[10px] font-bold px-2 py-0.5 border uppercase tracking-wider bg-zinc-900 hover:bg-zinc-900 ${getPlatformStyle(job.platform)}`}>
-            {job.platform}
+          <Badge className={`text-[10px] font-bold px-2.5 py-1 border uppercase tracking-wider bg-zinc-900 hover:bg-zinc-900 flex items-center gap-1.5 ${getPlatformStyle(job.platform)}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={
+                job.platform === 'wellfound'
+                  ? '/platform/wellfound.jpeg'
+                  : job.platform === 'greenhouse'
+                  ? '/platform/greenhouse.jpeg'
+                  : job.platform === 'workable'
+                  ? '/platform/workable.png'
+                  : '/platform/lever.png'
+              }
+              alt={`${job.platform} logo`}
+              className="h-3.5 w-3.5 rounded-sm object-contain bg-white/10"
+            />
+            <span>{job.platform}</span>
           </Badge>
 
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
