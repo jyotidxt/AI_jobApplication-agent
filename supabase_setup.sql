@@ -136,6 +136,10 @@ CREATE TABLE IF NOT EXISTS public.jobs (
     source_url TEXT,
     applied_status BOOLEAN DEFAULT false NOT NULL,
     saved_status BOOLEAN DEFAULT false NOT NULL,
+    application_status TEXT DEFAULT 'Saved',
+    required_fields JSONB DEFAULT '[]'::jsonb,
+    missing_fields JSONB DEFAULT '[]'::jsonb,
+    browserbase_session_id TEXT,
     fetched_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
