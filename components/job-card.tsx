@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface JobCardProps {
   job: DbJob
@@ -17,6 +18,7 @@ interface JobCardProps {
 }
 
 export function JobCard({ job, onSaveToggle }: JobCardProps) {
+  const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [saved, setSaved] = useState(job.saved_status)
   
@@ -120,7 +122,8 @@ export function JobCard({ job, onSaveToggle }: JobCardProps) {
     try {
       const res = await startAutoApply(job.id)
       if (res.success) {
-        toast.success('AI automation agent started! Fields are being analyzed in the background.')
+        toast.success('AI automation agent started! Redirecting to tracking pipeline...')
+        router.push('/dashboard/applications')
       } else {
         setAppStatus(job.application_status || 'Saved')
         toast.error(res.error || 'Failed to launch AI automation.')
