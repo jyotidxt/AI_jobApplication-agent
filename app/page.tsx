@@ -40,55 +40,30 @@ export default async function Home() {
         </div>
 
         {/* Call to Actions */}
-        <div className="flex flex-col items-center justify-center gap-6 pt-6">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
-            {user ? (
-              <Link
-                href="/dashboard"
-                className="w-full sm:w-auto h-14 px-10 flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-purple-500/30 active:scale-[0.98] transition-all duration-200 text-base md:text-lg gap-2"
-              >
-                ⚡ Enter Dashboard
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="w-full sm:w-auto h-14 px-10 flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold rounded-2xl shadow-xl hover:shadow-purple-500/30 active:scale-[0.98] transition-all duration-200 text-base md:text-lg gap-2"
-                >
-                  🔑 Sign In
-                </Link>
-                <Link
-                  href="/signup"
-                  className="w-full sm:w-auto h-14 px-10 flex items-center justify-center border-2 border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/60 hover:text-white text-zinc-200 font-extrabold rounded-2xl active:scale-[0.98] transition-all duration-200 text-base md:text-lg gap-2"
-                >
-                  ✨ Create Account
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Cute 3D Portfolio Access Button */}
-          <div className="w-full flex justify-center pt-2">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          {user ? (
             <Link
-              href="https://github.com/jyotidxt"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative group w-full sm:w-auto h-16 px-12 flex items-center justify-center bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:via-teal-400 hover:to-cyan-400 text-zinc-950 font-black rounded-3xl shadow-2xl hover:shadow-emerald-500/30 active:scale-[0.97] transition-all duration-300 text-lg md:text-xl gap-3 cursor-pointer overflow-hidden border border-emerald-400/20"
+              href="/dashboard"
+              className="w-full sm:w-auto h-12 px-8 flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-purple-500/20 active:scale-[0.99] transition-all duration-200 text-sm"
             >
-              {/* Inner ambient shine animation */}
-              <div className="absolute inset-0 w-1/2 h-full bg-white/20 transform -skew-x-12 -translate-x-full group-hover:animate-[shine_1s_ease-in-out]" />
-              
-              <span>🎮</span>
-              <span>See 3D Portfolio Directly</span>
-              <span>🚀</span>
-
-              {/* Notification ping badge */}
-              <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-4 w-4 bg-teal-500"></span>
-              </span>
+              Enter Dashboard
             </Link>
-          </div>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="w-full sm:w-auto h-12 px-8 flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-purple-500/20 active:scale-[0.99] transition-all duration-200 text-sm"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/signup"
+                className="w-full sm:w-auto h-12 px-8 flex items-center justify-center border border-zinc-800 bg-zinc-900/20 hover:bg-zinc-900/50 hover:text-white text-zinc-300 font-medium rounded-xl transition-colors text-sm"
+              >
+                Create Account
+              </Link>
+            </>
+          )}
         </div>
       </main>
 

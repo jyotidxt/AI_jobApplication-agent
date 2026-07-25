@@ -128,12 +128,3 @@
     @apply font-sans;
   }
 }
-
-@keyframes shine {
-  0% {
-    transform: skewX(-12deg) translateX(-150%);
-  }
-  100% {
-    transform: skewX(-12deg) translateX(300%);
-  }
-}
